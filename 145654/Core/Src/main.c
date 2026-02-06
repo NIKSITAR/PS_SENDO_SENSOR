@@ -28,8 +28,10 @@
 
 #define WATER_DENSITY           998.2071f
 #define GRAVITY                 9.80665f
+#define TEMP_DEPTH_COEFF 		0.01f   	// 1 см на градус надо проверить
 
 #define CALIBRATION_SAMPLES     1000
+
 
 /* ---------------- ПЕРЕМЕННЫЕ ---------------- */
 
@@ -44,6 +46,7 @@ volatile float depth_meters = 0;
 volatile float temperature_c = 0;
 volatile float surface_pressure_pa = 0;
 volatile float pressure_pa = 0;
+volatile float calibration_temperature = 0;
 
 volatile uint8_t calibration_done = 0;
 
@@ -130,6 +133,12 @@ void Auto_Calibrate_Surface_Pressure(void)
     }
 
     surface_pressure_pa = sum / CALIBRATION_SAMPLES;
+
+    /* ---- Сохраняем температуру калибровки ---- */
+    Read_Temperature_Sensor();
+    Read_Temperature_Sensor();
+    calibration_temperature = Calculate_Temperature(temp_adc_value);
+
     calibration_done = 1;
 }
 
@@ -186,9 +195,16 @@ float Calculate_Depth(float pressure)
 
     if(fabsf(dp) < 100) return 0;
 
-    return dp / (WATER_DENSITY * GRAVITY);
-}
+    float depth = dp / (WATER_DENSITY * GRAVITY);
 
+    /* ---- ТЕРМОКОМПЕНСАЦИЯ ---- */
+    float temp_delta = temperature_c - calibration_temperature;
+    depth -= TEMP_DEPTH_COEFF * temp_delta;
+
+    if(depth < 0) depth = 0;
+
+    return depth;
+}
 /* ---------------- UART ---------------- */
 
 void Send_Data_To_UART(void)

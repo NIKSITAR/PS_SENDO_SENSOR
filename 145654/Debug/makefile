@@ -60,8 +60,8 @@ all: main-build
 main-build: 145654.elf secondary-outputs
 
 # Tool invocations
-145654.elf 145654.map: $(OBJS) $(USER_OBJS) C:\Users\N\Downloads\Telegram\ Desktop\sensor_for_temperature\145654\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "145654.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\N\Downloads\Telegram Desktop\sensor_for_temperature\145654\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="145654.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+145654.elf 145654.map: $(OBJS) $(USER_OBJS) C:\Users\N\Desktop\PS_SENDO_SENSOR\145654\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "145654.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\N\Desktop\PS_SENDO_SENSOR\145654\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="145654.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

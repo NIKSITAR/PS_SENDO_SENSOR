@@ -28,10 +28,12 @@
 
 #define WATER_DENSITY           998.2071f
 #define GRAVITY                 9.80665f
-#define TEMP_DEPTH_COEFF 		0.01f   	// 1 см на градус надо проверить
+#define TEMP_DEPTH_COEFF 		0.033f   	//  коэффициет компенсации
 
 #define CALIBRATION_SAMPLES     1000
 
+#define TEMP_FILTER_K      0.05f
+#define PRESS_FILTER_K     0.1f
 
 /* ---------------- ПЕРЕМЕННЫЕ ---------------- */
 
@@ -49,6 +51,9 @@ volatile float pressure_pa = 0;
 volatile float calibration_temperature = 0;
 
 volatile uint8_t calibration_done = 0;
+volatile float pressure_filtered = 0;
+volatile float temperature_filtered = 0;
+volatile uint8_t filter_initialized = 0;
 
 /* ---------------- ПРОТОТИПЫ ---------------- */
 
@@ -72,6 +77,10 @@ void UART_Print(const char* msg)
 }
 
 /* ---------------- MAIN ---------------- */
+float IIR_Filter(float input, float prev, float k)
+{
+    return prev + k * (input - prev);
+}
 
 int main(void)
 {
@@ -110,8 +119,25 @@ int main(void)
             Read_Temperature_Sensor();
             Read_Temperature_Sensor();
 
-            pressure_pa = Calculate_Pressure_Pa(pressure_adc_value);
-            temperature_c = Calculate_Temperature(temp_adc_value);
+            float pressure_raw = Calculate_Pressure_Pa(pressure_adc_value);
+            float temp_raw = Calculate_Temperature(temp_adc_value);
+
+            /* --- Инициализация фильтра --- */
+            if(!filter_initialized)
+            {
+                pressure_filtered = pressure_raw;
+                temperature_filtered = temp_raw;
+                filter_initialized = 1;
+            }
+
+            /* --- Фильтрация --- */
+            pressure_filtered = IIR_Filter(pressure_raw, pressure_filtered, PRESS_FILTER_K);
+            temperature_filtered = IIR_Filter(temp_raw, temperature_filtered, TEMP_FILTER_K);
+
+            /* --- Используем отфильтрованные значения --- */
+            pressure_pa = pressure_filtered;
+            temperature_c = temperature_filtered;
+
             depth_meters = Calculate_Depth(pressure_pa);
 
             Send_Data_To_UART();
@@ -159,6 +185,7 @@ void Read_Temperature_Sensor(void)
     temp_adc_value = HAL_ADC_GetValue(&hadc2);
     HAL_ADC_Stop(&hadc2);
 }
+
 
 /* ---------------- РАСЧЁТЫ ---------------- */
 
